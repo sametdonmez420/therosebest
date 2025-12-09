@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Büyülü Gece Bahçesi - Canlı Bloom</title>
+    <title>loveroses</title>
     <style>
         body { 
             margin: 0; 
             overflow: hidden; 
             background-color: #000000;
-            background-image: radial-gradient(circle at 50% 100%, #1a0b0b, #000000); 
+            background-image: radial-gradient(circle at 50% 100%, #0d0000, #000000); 
             font-family: 'Segoe UI', sans-serif; 
-            touch-action: none;
+            touch-action: none; /* Mobilde kaydırmayı engeller */
+            cursor: none; /* Mouse imlecini gizler, tam sinematik olsun diye */
         }
         canvas { 
             display: block; 
             width: 100%;
             height: 100vh;
         }
-        /* Yükleniyor yazısı için */
         #loading {
             position: absolute;
             top: 50%;
@@ -44,31 +44,16 @@ let width, height;
 let particles = [];
 let fireflies = [];
 let targetPoints = [];
-let mouse = { x: -1000, y: -1000 };
 
-// AYARLAR
+// AYARLAR (Mouse ayarlarını sildim)
 const CONFIG = {
     particleCount: 4000, 
     windStrength: 0.003,
-    mouseRadius: 150, // Mouse etkileşim yarıçapı
-    bloomSpeed: 0.02  // Çiçek açma hızı
+    bloomSpeed: 0.02 
 };
 
-/* ------------------------------------------------
-   MOUSE EVENTLERİ
------------------------------------------------- */
-window.addEventListener('mousemove', e => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
-window.addEventListener('touchmove', e => {
-    mouse.x = e.touches[0].clientX;
-    mouse.y = e.touches[0].clientY;
-}, {passive: false});
-window.addEventListener('mouseleave', () => {
-    mouse.x = -1000;
-    mouse.y = -1000;
-});
+// Mouse event listener'larının hepsini kaldırdım.
+// Sadece pencere boyutu değişirse çalışacak fonksiyon kaldı.
 
 function resize() {
     const dpr = Math.min(window.devicePixelRatio, 2);
@@ -77,29 +62,24 @@ function resize() {
     canvas.style.width = window.innerWidth + 'px';
     canvas.style.height = window.innerHeight + 'px';
     ctx.scale(dpr, dpr);
-    
-    // Ekran boyutu değişirse yeniden başlat
     init();
 }
 window.addEventListener('resize', resize);
 
 /* ------------------------------------------------
-   RENK VE YARDIMCI FONKSİYONLAR
+   RENK AYARLARI
 ------------------------------------------------ */
 function getRoseColor(radiusRatio) {
-    // Daha canlı kırmızılar ve pembeler
-    const h = 340 + Math.random() * 20; 
+    const h = 320 + Math.random() * 40; 
     const s = 80 + Math.random() * 20; 
-    const l = 40 + (radiusRatio * 30); 
-    if (Math.random() > 0.95) return `rgba(255, 255, 255, 0.9)`; // Pırıltı
+    const l = 20 + (radiusRatio * 20); // Koyu renk ayarı korundu
     return `hsla(${h}, ${s}%, ${l}%, 1)`;
 }
 
 function getStemColor() {
-    // Daha neon ve mistik yeşiller
-    const h = 120 + Math.random() * 30;
-    const s = 60 + Math.random() * 30;
-    const l = 30 + Math.random() * 30;
+    const h = 120 + Math.random() * 30; 
+    const s = 70;
+    const l = 20 + Math.random() * 20; 
     return `hsla(${h}, ${s}%, ${l}%, 1)`;
 }
 
@@ -112,7 +92,6 @@ function createVolumetricRose(cx, cy, maxRadius) {
         const r = maxRadius * Math.sqrt(i / count);
         const noise = (Math.random() - 0.5) * (maxRadius * 0.2);
         
-        // Çiçeği hafifçe yukarı eğelim (perspektif)
         let x = cx + Math.cos(theta) * r + noise;
         let y = cy + Math.sin(theta) * r * 0.7 + noise; 
 
@@ -124,7 +103,6 @@ function createVolumetricRose(cx, cy, maxRadius) {
             color: getRoseColor(normalizedR),
             size: (Math.random() * 2 + 1.5) * (0.5 + normalizedR),
             type: 'petal',
-            // Çiçeğin merkezi daha geç açsın diye 'r' değerini kullanacağız
             bloomOrder: normalizedR 
         });
     }
@@ -132,7 +110,7 @@ function createVolumetricRose(cx, cy, maxRadius) {
 }
 
 /* ------------------------------------------------
-   HEDEF OLUŞTURMA (GENERATION)
+   HEDEF OLUŞTURMA
 ------------------------------------------------ */
 function generateTargets() {
     targetPoints = [];
@@ -140,7 +118,6 @@ function generateTargets() {
     const sh = window.innerHeight;
     const scaleFactor = Math.min(sw, sh) / 1000; 
     
-    // Çiçek sayısı ve dağılım
     const flowerCount = 18; 
     const spreadX = sw * 0.35; 
     const spreadY = sh * 0.2;
@@ -150,7 +127,6 @@ function generateTargets() {
 
     let placedFlowers = [];
 
-    // Önce çiçeklerin konumlarını belirle
     for(let i=0; i<flowerCount; i++) {
         let safe = false, attempts = 0;
         let roseX, roseY, roseSize;
@@ -162,11 +138,9 @@ function generateTargets() {
             roseX = centerX + rx;
             roseY = centerY + ry;
             
-            // Derinlik algısı: Aşağıdakiler daha büyük ve önde
             const depth = (roseY - (centerY - spreadY)) / (spreadY * 2);
             roseSize = (20 + (depth * 40)) * scaleFactor;
 
-            // Çakışma kontrolü
             let overlap = false;
             for(let f of placedFlowers) {
                 const dist = Math.hypot(roseX - f.x, roseY - f.y);
@@ -179,27 +153,22 @@ function generateTargets() {
         if (safe) {
             placedFlowers.push({ x: roseX, y: roseY, size: roseSize });
             
-            // Gül partikülleri
             const rosePts = createVolumetricRose(roseX, roseY, roseSize);
-            // Çiçekler saplar bittikten sonra açsın diye bir delayFlag ekliyoruz
             rosePts.forEach(p => {
-                p.delayMultiplier = 1.0; // En son açacak
+                p.delayMultiplier = 1.0; 
                 p.baseY = stemBase;
-                p.flowerCenterY = roseY; // Sapın ne kadar uzun olduğunu bilmek için
+                p.flowerCenterY = roseY; 
             });
             targetPoints.push(...rosePts);
 
-            // Sap Oluşturma (Bezier Eğrisi)
             const distToBottom = Math.abs(stemBase - roseY);
             const stemSteps = Math.floor(distToBottom / (8 * scaleFactor)); 
-            
             const cpX = (centerX + roseX) / 2 + (Math.random()-0.5) * 200 * scaleFactor;
             
             for(let k=0; k<=stemSteps; k++) {
                 const t = k / stemSteps;
-                // Quadratic Bezier
                 const sx = (1-t)*(1-t)*centerX + 2*(1-t)*t*cpX + t*t*roseX;
-                const sy = (1-t)*(1-t)*stemBase + 2*(1-t)*t*roseY + t*t*roseY; // Basit bezier, cpY'yi roseY'ye yakınlaştırdım
+                const sy = (1-t)*(1-t)*stemBase + 2*(1-t)*t*roseY + t*t*roseY; 
                 
                 targetPoints.push({
                     x: sx + (Math.random()-0.5) * 4,
@@ -207,9 +176,8 @@ function generateTargets() {
                     color: getStemColor(),
                     size: (Math.random() * 2 + 1.5) * scaleFactor,
                     type: 'stem',
-                    // Saplar aşağıdan yukarı (t 0'dan 1'e) sırayla oluşsun
                     bloomOrder: t,
-                    delayMultiplier: 0.2 // Çiçeklerden önce
+                    delayMultiplier: 0.2 
                 });
             }
         }
@@ -217,99 +185,63 @@ function generateTargets() {
 }
 
 /* ------------------------------------------------
-   PARTİKÜL SINIFI
+   PARTİKÜL SINIFI (ETKİLEŞİM KODLARI SİLİNDİ)
 ------------------------------------------------ */
 class Particle {
     constructor(target) {
         const sw = window.innerWidth;
         const sh = window.innerHeight;
-
-        // Her partikül ekranın altından başlar
         this.x = sw / 2 + (Math.random()-0.5) * 100;
         this.y = sh + 50;
-
         this.tx = target.x;
         this.ty = target.y;
         this.color = target.color;
         this.baseSize = target.size;
-        this.size = 0; // Başlangıçta görünmez
+        this.size = 0; 
         this.type = target.type;
+        this.state = 'waiting'; 
         
-        // Animasyon durumu
-        this.state = 'waiting'; // waiting -> growing -> settled
-        
-        // Sıralama mantığı:
-        // delayMultiplier: 0.2 (sap) veya 1.0 (çiçek)
-        // bloomOrder: Sap için 0(alt)->1(üst), Çiçek için 0(merkez)->1(dış)
-        
-        // Toplam gecikme hesaplama
         if (this.type === 'stem') {
-            this.waitTimer = target.bloomOrder * 100; // Saplar aşağıdan yukarı
+            this.waitTimer = target.bloomOrder * 100; 
         } else {
-            // Çiçekler, sapın bitmesini beklemeli + kendi içindeki sırası
-            // Çiçeğin yüksekliğine göre de biraz fark koyalım (aşağıdakiler önce)
             const heightFactor = (sh - this.ty) * 0.2;
             this.waitTimer = 120 + heightFactor + (target.bloomOrder * 50);
         }
     }
 
     update(frame) {
-        // 1. BEKLEME EVRESİ
+        // 1. Bekleme
         if (this.state === 'waiting') {
             this.waitTimer--;
-            if (this.waitTimer <= 0) {
-                this.state = 'growing';
-            }
+            if (this.waitTimer <= 0) this.state = 'growing';
             return;
         }
 
-        // 2. BÜYÜME/GİTME EVRESİ
-        // Hedefe doğru gitme (Easing)
+        // 2. Hedefe yaklaşma (Mouse kuvveti olmadan sadece easing)
         this.x += (this.tx - this.x) * 0.1;
         this.y += (this.ty - this.y) * 0.1;
 
-        // Boyut büyümesi (Bloom efekti)
+        // 3. Boyut büyümesi
         if (this.size < this.baseSize) {
             this.size += 0.15;
         } else {
             this.size = this.baseSize;
         }
 
-        // 3. ETKİLEŞİM VE RÜZGAR (Sürekli)
-        // Doğal salınım
+        // 4. Doğal Rüzgar Salınımı (Mouse hesaplamaları tamamen kaldırıldı)
         const time = Date.now() * CONFIG.windStrength;
         const swayAmt = this.type === 'petal' ? 1.0 : 0.3;
         const naturalSwayX = Math.sin(time + this.ty * 0.02) * swayAmt;
         const naturalSwayY = Math.cos(time + this.tx * 0.02) * swayAmt;
 
-        // Mouse Etkileşimi (Rüzgar)
-        let dx = this.x - mouse.x;
-        let dy = this.y - mouse.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        let mouseForceX = 0;
-        let mouseForceY = 0;
-
-        if (dist < CONFIG.mouseRadius) {
-            const force = (CONFIG.mouseRadius - dist) / CONFIG.mouseRadius;
-            const angle = Math.atan2(dy, dx);
-            // Mouse'dan kaçış
-            mouseForceX = Math.cos(angle) * force * 20; 
-            mouseForceY = Math.sin(angle) * force * 20;
-        }
-
-        // Son pozisyon hesaplama (Hedef + Salınım + Mouse)
-        // Kalıcı bir değişim değil, anlık ofset ekliyoruz
-        // Ancak bu yapıda x ve y'yi sürekli güncellediğimiz için
-        // tx ve ty referans alıp üzerine ekleyelim
-        
-        // Asıl hedefe %95 geri dönme (yaylanma)
-        this.x = this.tx + naturalSwayX + (this.x - this.tx) * 0.9 + mouseForceX * 0.1;
-        this.y = this.ty + naturalSwayY + (this.y - this.ty) * 0.9 + mouseForceY * 0.1;
+        // Hedef konuma rüzgarı ekle
+        // (this.x - this.tx) * 0.95 formülüyle parçacık hedefine yapışık kalır ama salınır
+        this.x = this.tx + naturalSwayX + (this.x - this.tx) * 0.95;
+        this.y = this.ty + naturalSwayY + (this.y - this.ty) * 0.95;
     }
 
     draw() {
         if (this.state === 'waiting') return;
-        
         ctx.beginPath();
         ctx.fillStyle = this.color;
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
@@ -317,9 +249,6 @@ class Particle {
     }
 }
 
-/* ------------------------------------------------
-   ATEŞ BÖCEKLERİ
------------------------------------------------- */
 class Firefly {
     constructor() { this.init(); }
     init() {
@@ -335,18 +264,11 @@ class Firefly {
         this.x += this.speedX;
         this.y += this.speedY;
         
-        // Mouse'a hafif çekim
-        let dx = mouse.x - this.x;
-        let dy = mouse.y - this.y;
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        if (dist < 300 && mouse.x > 0) {
-            this.x += dx * 0.005;
-            this.y += dy * 0.005;
-        }
+        // Ateş böceklerinin mouse'a gitme özelliği de kaldırıldı.
+        // Sadece rastgele uçuşuyorlar.
 
         this.cycle += 0.05;
         this.alpha = (Math.sin(this.cycle) + 1) / 2 * 0.8;
-        
         if (this.x < -10 || this.x > window.innerWidth + 10 || this.y < -10 || this.y > window.innerHeight + 10) this.init();
     }
     draw() {
@@ -357,40 +279,26 @@ class Firefly {
     }
 }
 
-/* ------------------------------------------------
-   ANA DÖNGÜ
------------------------------------------------- */
 function init() {
     particles = [];
     fireflies = [];
     generateTargets(); 
-    
-    // Rastgelelik yerine hedefleri karıştırmayalım, çünkü çizim sırası önemli değil ama işlem sırası için
-    // performans için shuffle edebiliriz ama bloom efekti için karışık olması sorun değil, her partikül kendi timer'ına sahip.
-    
     const total = Math.min(targetPoints.length, CONFIG.particleCount);
     for(let i = 0; i < total; i++) {
         particles.push(new Particle(targetPoints[i]));
     }
-
     for(let i = 0; i < 50; i++) fireflies.push(new Firefly());
-    
-    // Yükleme yazısını kaldır
     setTimeout(() => { loading.style.opacity = 0; }, 1000);
 }
 
 let frame = 0;
 function animate() {
     frame++;
-    
-    // Hafif iz bırakma efekti (Trail effect)
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)"; 
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     
-    // Lighter modu renkleri patlatır
     ctx.globalCompositeOperation = 'lighter';
 
-    // Çizim
     particles.forEach(p => {
         p.update(frame);
         p.draw();
@@ -405,7 +313,6 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// Başlat
 resize();
 animate();
 
