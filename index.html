@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>loveroses</title>
+    <title>Sakin ve Hafif Koyu Güller</title>
     <style>
         body { 
             margin: 0; 
             overflow: hidden; 
             background-color: #000000;
-            background-image: radial-gradient(circle at 50% 100%, #0d0000, #000000); 
+            background-image: radial-gradient(circle at 50% 100%, #1a0b0b, #000000); 
             font-family: 'Segoe UI', sans-serif; 
             touch-action: none; 
             cursor: none; 
@@ -32,7 +32,7 @@
 </head>
 <body>
 
-<div id="loading">Bahçe Sakinleşiyor...</div>
+
 <canvas id="garden"></canvas>
 
 <script>
@@ -45,10 +45,9 @@ let particles = [];
 let fireflies = [];
 let targetPoints = [];
 
-// AYARLAR
+// AYARLAR (Sakin mod)
 const CONFIG = {
     particleCount: 4000, 
-    // DEĞİŞİKLİK 1: Rüzgar hızı düşürüldü (Daha yavaş salınım)
     windStrength: 0.001, 
     bloomSpeed: 0.02 
 };
@@ -65,19 +64,28 @@ function resize() {
 window.addEventListener('resize', resize);
 
 /* ------------------------------------------------
-   RENK AYARLARI
+   RENK AYARLARI (Hafifçe Koyulaştırıldı)
 ------------------------------------------------ */
 function getRoseColor(radiusRatio) {
-    const h = 320 + Math.random() * 40; 
-    const s = 80 + Math.random() * 20; 
-    const l = 20 + (radiusRatio * 20); 
+    const hueVar = Math.random() * 10 - 5; 
+    const h = 350 + hueVar; 
+    const s = 90 - (radiusRatio * 10); 
+    
+    // DEĞİŞİKLİK 1: Parlaklık (l) çok az düşürüldü.
+    // Eskiden: let l = 10 + (radiusRatio * 45);
+    // Yeni: Daha düşük başlangıç ve daha az artış.
+    let l = 8 + (radiusRatio * 40); 
+    
+    if (Math.random() > 0.98) return `rgba(255, 255, 255, 0.9)`;
+    
     return `hsla(${h}, ${s}%, ${l}%, 1)`;
 }
 
 function getStemColor() {
-    const h = 120 + Math.random() * 30; 
-    const s = 70;
-    const l = 20 + Math.random() * 20; 
+    const h = 100 + Math.random() * 25;
+    const s = 55 + Math.random() * 30;
+    // DEĞİŞİKLİK 2: Sap parlaklığı başlangıcı 25'ten 20'ye çekildi.
+    const l = 20 + Math.random() * 25;
     return `hsla(${h}, ${s}%, ${l}%, 1)`;
 }
 
@@ -223,9 +231,7 @@ class Particle {
             this.size = this.baseSize;
         }
 
-        // DEĞİŞİKLİK 2: Sallanma miktarları (swayAmt) azaltıldı
         const time = Date.now() * CONFIG.windStrength;
-        // Eskiden: 1.0 ve 0.3 idi. Şimdi çok daha düşük:
         const swayAmt = this.type === 'petal' ? 0.3 : 0.1; 
         
         const naturalSwayX = Math.sin(time + this.ty * 0.02) * swayAmt;
